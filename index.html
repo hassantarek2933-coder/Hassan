@@ -48,6 +48,12 @@ button{
 }
 button:disabled{opacity:.5}
 #notice{padding:8px 14px;color:#fbbf24;font-size:12px}
+@media(max-width:480px){
+  .app{height:90vh}
+  form{gap:5px;padding:8px}
+  #name{max-width:85px}
+  button{padding:0 10px}
+}
 </style>
 </head>
 
@@ -59,6 +65,7 @@ button:disabled{opacity:.5}
   </header>
 
   <div id="notice"></div>
+
   <div id="messages">
     <p>أهلاً بيك 👋 جاري تحميل الرسائل...</p>
   </div>
@@ -75,8 +82,14 @@ import { initializeApp }
   from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 
 import {
-  getFirestore, collection, addDoc, query,
-  orderBy, limit, onSnapshot, serverTimestamp
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -97,7 +110,6 @@ const nameEl = document.getElementById("name");
 const messageEl = document.getElementById("message");
 const sendBtn = document.getElementById("sendBtn");
 
-let db;
 let senderId = sessionStorage.getItem("chatSenderId");
 
 if (!senderId) {
@@ -107,10 +119,10 @@ if (!senderId) {
 
 try {
   const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
+  const db = getFirestore(app);
 
-  // اسم مجموعة الرسائل في Firestore
-  const messagesRef = collection(db, "الرسائل");
+  // اسم المجموعة مطابق لقواعد Firestore
+  const messagesRef = collection(db, "messages");
 
   const q = query(
     messagesRef,
@@ -122,7 +134,8 @@ try {
     messagesEl.replaceChildren();
 
     if (snapshot.empty) {
-      messagesEl.textContent = "لسه مفيش رسائل. ابدأ المحادثة 👋";
+      messagesEl.textContent =
+        "لسه مفيش رسائل. ابدأ المحادثة 👋";
     }
 
     snapshot.forEach((doc) => {
@@ -142,7 +155,8 @@ try {
           })
         : "الآن";
 
-      meta.textContent = (data.name || "مستخدم") + " • " + time;
+      meta.textContent =
+        (data.name || "مستخدم") + " • " + time;
 
       const body = document.createElement("div");
       body.className = "body";
@@ -153,6 +167,7 @@ try {
     });
 
     messagesEl.scrollTop = messagesEl.scrollHeight;
+
     statusEl.textContent = "متصل بفايربيس ✓";
     statusEl.style.color = "#86efac";
     sendBtn.disabled = false;
@@ -160,10 +175,13 @@ try {
 
   }, (error) => {
     console.error("Firestore read error:", error);
+
     statusEl.textContent = "فشل تحميل الرسائل";
     notice.textContent =
-      "راجع قواعد Firestore واتصال الإنترنت. رمز الخطأ: " +
-      error.code;
+      "خطأ: " + error.code +
+      " — راجع قواعد Firestore واتصال الإنترنت.";
+
+    sendBtn.disabled = true;
   });
 
   form.addEventListener("submit", async (e) => {
@@ -189,7 +207,9 @@ try {
 
     } catch (error) {
       console.error("Firestore write error:", error);
+
       alert("فشل إرسال الرسالة: " + error.code);
+
     } finally {
       sendBtn.disabled = false;
     }
@@ -197,6 +217,7 @@ try {
 
 } catch (error) {
   console.error("Firebase initialization error:", error);
+
   statusEl.textContent = "خطأ في تشغيل Firebase";
   notice.textContent = error.message;
 }
